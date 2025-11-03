@@ -1,10 +1,58 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { useAuthStore } from '@/lib/auth-store'
 import { STRIPE_PLANS } from '@/lib/stripe'
 
 export function PricingSection() {
   const plans = Object.entries(STRIPE_PLANS)
+  const user = useAuthStore((state) => state.user)
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+
+  // Client-side Price ID mapping (these are public, not secret)
+  const PRICE_IDS: Record<string, string> = {
+    starter: 'price_1SP9dPAkkVcTj4lDpEgJw86H',
+    professional: 'price_1SP9fAAkkVcTj4lDyXaLp2WE',
+    enterprise: 'price_1SP9fcAkkVcTj4lD1hyKGlMa',
+  }
+
+  const handleGetStarted = async (planKey: string, plan: typeof STRIPE_PLANS[keyof typeof STRIPE_PLANS]) => {
+    if (!user) {
+      // Not logged in - go to signup with plan
+      window.location.href = `/signup?plan=${planKey}`
+      return
+    }
+
+    // Use the actual Price ID from our mapping
+    const priceId = PRICE_IDS[planKey] || plan.priceId
+    
+    setLoadingPlan(planKey)
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId,
+          userId: user.id,
+          email: user.email,
+        }),
+      })
+      
+      const data = await response.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        console.error('Checkout error response:', data)
+        alert(`Error: ${data.error || 'Failed to create checkout session'}`)
+        setLoadingPlan(null)
+      }
+    } catch (error) {
+      console.error('Checkout error:', error)
+      alert('Error creating checkout session. Please try again.')
+      setLoadingPlan(null)
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -68,16 +116,17 @@ export function PricingSection() {
               ))}
             </ul>
             
-            <Link
-              href={`/signup?plan=${key}`}
-              className={`block text-center py-3 px-6 rounded-lg font-semibold transition-all ${
+            <button
+              onClick={() => handleGetStarted(key, plan)}
+              disabled={loadingPlan === key}
+              className={`w-full text-center py-3 px-6 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                 key === 'professional'
                   ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
                   : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
               }`}
             >
-              {key === 'enterprise' ? 'Get Premium' : 'Get Started'}
-            </Link>
+              {loadingPlan === key ? 'Loading...' : key === 'enterprise' ? 'Get Premium' : 'Get Started'}
+            </button>
           </div>
         ))}
       </div>

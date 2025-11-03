@@ -42,15 +42,54 @@ export default function SignUpPage() {
 
     setLoading(true)
 
-    const { error } = await signUp(email, password)
+    const { error: signUpError } = await signUp(email, password)
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError.message)
       setLoading(false)
-    } else {
+      return
+    }
+
+    // For testing: Auto-login after signup and redirect to checkout
+    const { signIn } = useAuthStore.getState()
+    const { error: signInError } = await signIn(email, password)
+    
+    if (signInError) {
+      // If auto-login fails, show success message (user needs to verify email)
       setSuccess(true)
       setLoading(false)
+      return
     }
+
+    // User is logged in - redirect to checkout
+    const plan = STRIPE_PLANS[selectedPlan as keyof typeof STRIPE_PLANS]
+    if (plan?.priceId) {
+      try {
+        const user = useAuthStore.getState().user
+        if (user) {
+          const response = await fetch('/api/stripe/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              priceId: plan.priceId,
+              userId: user.id,
+              email: user.email,
+            }),
+          })
+          
+          const data = await response.json()
+          if (data.url) {
+            window.location.href = data.url
+            return
+          }
+        }
+      } catch (err) {
+        console.error('Checkout error:', err)
+      }
+    }
+
+    // Fallback: redirect to dashboard
+    router.push('/dashboard')
   }
 
   if (success) {
