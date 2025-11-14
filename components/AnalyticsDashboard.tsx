@@ -1,32 +1,60 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+interface Stats {
+  totalApplications: number
+  profileViews: number
+  responses: number
+  offers: number
+  responseRate: number
+  averageMatchScore: number
+  weeklyData: { week: string; applications: number; responses: number }[]
+  topCompanies: { name: string; applications: number; status: string }[]
+}
 
 export function AnalyticsDashboard() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d')
+  const [stats, setStats] = useState<Stats>({
+    totalApplications: 0,
+    profileViews: 0,
+    responses: 0,
+    offers: 0,
+    responseRate: 0,
+    averageMatchScore: 0,
+    weeklyData: [],
+    topCompanies: [],
+  })
+  const [loading, setLoading] = useState(true)
 
-  // Mock data - replace with real data from your API
-  const stats = {
-    totalApplications: 147,
-    responses: 23,
-    offers: 2,
-    responseRate: 15.6,
-    averageMatchScore: 89,
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/user/stats?range=${timeRange}`)
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [timeRange])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      </div>
+    )
   }
-
-  const weeklyData = [
-    { week: 'Week 1', applications: 35, responses: 4 },
-    { week: 'Week 2', applications: 42, responses: 6 },
-    { week: 'Week 3', applications: 38, responses: 7 },
-    { week: 'Week 4', applications: 32, responses: 6 },
-  ]
-
-  const topCompanies = [
-    { name: 'TechCorp', applications: 8, status: 'Response received' },
-    { name: 'DataFlow', applications: 6, status: 'Under review' },
-    { name: 'CloudScale', applications: 5, status: 'Profile viewed' },
-    { name: 'InnovateLabs', applications: 4, status: 'Applied' },
-  ]
 
   return (
     <div className="space-y-6">
@@ -61,31 +89,25 @@ export function AnalyticsDashboard() {
         <div className="card bg-gradient-to-br from-purple-50 to-purple-100">
           <div className="text-3xl font-bold text-purple-600">{stats.responses}</div>
           <div className="text-sm text-gray-700 font-medium">Responses</div>
-          <div className="text-xs text-green-600 mt-1">↑ 18% from last period</div>
-        </div>
-
-        <div className="card bg-gradient-to-br from-blue-50 to-blue-100">
-          <div className="text-3xl font-bold text-blue-600">{stats.averageMatchScore}%</div>
-          <div className="text-sm text-gray-700 font-medium">Avg Match Score</div>
-          <div className="text-xs text-blue-600 mt-1">↑ 5% from last period</div>
+          <div className="text-xs text-green-600 mt-1">{stats.responses > 0 ? 'Active' : 'No responses yet'}</div>
         </div>
 
         <div className="card bg-gradient-to-br from-yellow-50 to-yellow-100">
           <div className="text-3xl font-bold text-yellow-600">{stats.offers}</div>
           <div className="text-sm text-gray-700 font-medium">Offers</div>
-          <div className="text-xs text-green-600 mt-1">New this period!</div>
+          <div className="text-xs text-green-600 mt-1">{stats.offers > 0 ? 'Congratulations!' : 'Keep applying'}</div>
         </div>
 
         <div className="card bg-gradient-to-br from-orange-50 to-orange-100">
-          <div className="text-3xl font-bold text-orange-600">{stats.responseRate}%</div>
+          <div className="text-3xl font-bold text-orange-600">{stats.responseRate.toFixed(1)}%</div>
           <div className="text-sm text-gray-700 font-medium">Response Rate</div>
-          <div className="text-xs text-green-600 mt-1">↑ 3% from last period</div>
+          <div className="text-xs text-green-600 mt-1">{stats.responseRate > 10 ? 'Above average!' : 'Keep improving'}</div>
         </div>
 
         <div className="card bg-gradient-to-br from-pink-50 to-pink-100">
           <div className="text-3xl font-bold text-pink-600">{stats.averageMatchScore}%</div>
           <div className="text-sm text-gray-700 font-medium">Avg Match Score</div>
-          <div className="text-xs text-gray-600 mt-1">Consistent</div>
+          <div className="text-xs text-gray-600 mt-1">{stats.averageMatchScore > 0 ? 'Good matches' : 'No matches yet'}</div>
         </div>
       </div>
 
@@ -95,7 +117,10 @@ export function AnalyticsDashboard() {
         <div className="card">
           <h3 className="text-xl font-bold text-gray-900 mb-6">Application Activity</h3>
           <div className="space-y-4">
-            {weeklyData.map((week, index) => (
+            {stats.weeklyData.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No data for this time period</p>
+            ) : (
+              stats.weeklyData.map((week, index) => (
               <div key={week.week}>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-700 font-medium">{week.week}</span>
@@ -118,7 +143,8 @@ export function AnalyticsDashboard() {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
           <div className="mt-6 flex gap-6 text-sm">
             <div className="flex items-center gap-2">
@@ -136,7 +162,10 @@ export function AnalyticsDashboard() {
         <div className="card">
           <h3 className="text-xl font-bold text-gray-900 mb-6">Top Companies Applied To</h3>
           <div className="space-y-4">
-            {topCompanies.map((company, index) => (
+            {stats.topCompanies.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No applications yet</p>
+            ) : (
+              stats.topCompanies.map((company, index) => (
               <div key={company.name} className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center text-white font-bold">
                   #{index + 1}
@@ -149,7 +178,8 @@ export function AnalyticsDashboard() {
                   {company.status}
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -159,12 +189,15 @@ export function AnalyticsDashboard() {
         <h3 className="text-xl font-bold text-gray-900 mb-4">📊 Performance Insights</h3>
         <div className="space-y-3 text-gray-700">
           <p>
-            ✓ Your response rate is <strong className="text-green-600">15.6%</strong>, which is 
-            3x higher than the industry average of 5%.
+            ✓ Your response rate is <strong className="text-green-600">{stats.responseRate.toFixed(1)}%</strong>
+            {stats.responseRate > 5 ? ', which is above the industry average of 5%.' : '. Keep applying to improve!'}
           </p>
           <p>
-            ✓ You're getting <strong className="text-purple-600">23 responses</strong> from 147 applications. 
-            Keep this up and you'll have multiple offers soon!
+            {stats.totalApplications > 0 ? (
+              <>✓ You've sent <strong className="text-purple-600">{stats.totalApplications} applications</strong> and received <strong className="text-purple-600">{stats.responses} responses</strong>. Keep this up!</>
+            ) : (
+              <>✓ Start applying to jobs to see your statistics here!</>
+            )}
           </p>
           <p>
             ✓ Best application times: <strong>Tuesday-Thursday mornings</strong> show 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Application {
   id: string
@@ -13,44 +13,50 @@ interface Application {
 }
 
 export function ApplicationTracker() {
-  const [applications] = useState<Application[]>([
-    {
-      id: '1',
-      jobTitle: 'Senior Software Engineer',
-      company: 'TechCorp Inc.',
-      appliedDate: '2024-10-06',
-      status: 'response',
-      salary: '$120k - $180k',
-      location: 'San Francisco, CA'
-    },
-    {
-      id: '2',
-      jobTitle: 'Full Stack Developer',
-      company: 'StartupXYZ',
-      appliedDate: '2024-10-05',
-      status: 'viewed',
-      salary: '$100k - $150k',
-      location: 'New York, NY'
-    },
-    {
-      id: '3',
-      jobTitle: 'Software Developer',
-      company: 'MegaCorp',
-      appliedDate: '2024-10-04',
-      status: 'applied',
-      salary: '$90k - $130k',
-      location: 'Austin, TX'
-    },
-    {
-      id: '4',
-      jobTitle: 'Backend Engineer',
-      company: 'DataFlow Solutions',
-      appliedDate: '2024-10-03',
-      status: 'rejected',
-      salary: '$110k - $160k',
-      location: 'Remote'
-    },
-  ])
+  const [applications, setApplications] = useState<Application[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchApplications() {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/user/stats?range=90d')
+        if (response.ok) {
+          const data = await response.json()
+          // Transform API data to component format
+          const transformed = (data.applications || []).map((app: any) => ({
+            id: app.id,
+            jobTitle: app.job_listings?.title || 'Unknown Position',
+            company: app.job_listings?.company || 'Unknown Company',
+            appliedDate: app.applied_at,
+            status: app.status,
+            salary: app.job_listings?.salary || 'Not specified',
+            location: app.job_listings?.location || 'Not specified',
+          }))
+          setApplications(transformed)
+        }
+      } catch (error) {
+        console.error('Error fetching applications:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchApplications()
+  }, [])
+
+  const getTimeAgo = (date: Date): string => {
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 60) return `${diffMins} minutes ago`
+    if (diffHours < 24) return `${diffHours} hours ago`
+    if (diffDays < 7) return `${diffDays} days ago`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
 
   const getStatusBadge = (status: Application['status']) => {
     const styles = {
@@ -82,6 +88,16 @@ export function ApplicationTracker() {
     viewed: applications.filter(a => a.status === 'viewed').length,
     responses: applications.filter(a => a.status === 'response').length,
     offers: applications.filter(a => a.status === 'offer').length,
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -120,19 +136,25 @@ export function ApplicationTracker() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 text-left">
-                <th className="pb-3 font-semibold text-gray-700">Job Title</th>
-                <th className="pb-3 font-semibold text-gray-700">Company</th>
-                <th className="pb-3 font-semibold text-gray-700">Applied</th>
-                <th className="pb-3 font-semibold text-gray-700">Status</th>
-                <th className="pb-3 font-semibold text-gray-700">Salary</th>
-                <th className="pb-3 font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map((app) => (
+          {applications.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">No applications yet</p>
+              <p className="text-sm text-gray-400">Start applying to jobs to track them here!</p>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 text-left">
+                  <th className="pb-3 font-semibold text-gray-700">Job Title</th>
+                  <th className="pb-3 font-semibold text-gray-700">Company</th>
+                  <th className="pb-3 font-semibold text-gray-700">Applied</th>
+                  <th className="pb-3 font-semibold text-gray-700">Status</th>
+                  <th className="pb-3 font-semibold text-gray-700">Salary</th>
+                  <th className="pb-3 font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {applications.map((app) => (
                 <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-4">
                     <div className="font-semibold text-gray-900">{app.jobTitle}</div>
@@ -154,9 +176,10 @@ export function ApplicationTracker() {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
@@ -164,33 +187,47 @@ export function ApplicationTracker() {
       <div className="card">
         <h3 className="text-xl font-bold mb-4">📅 Recent Activity</h3>
         <div className="space-y-4">
-          <div className="flex items-start gap-4">
-            <div className="bg-green-100 text-green-600 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-              🎉
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">Response received from TechCorp Inc.</p>
-              <p className="text-sm text-gray-600">2 hours ago</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-              📤
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">Applied to 12 new positions</p>
-              <p className="text-sm text-gray-600">Today at 3:00 AM</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="bg-purple-100 text-purple-600 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-              👀
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">StartupXYZ viewed your profile</p>
-              <p className="text-sm text-gray-600">Yesterday</p>
-            </div>
-          </div>
+          {applications.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No recent activity</p>
+          ) : (
+            applications.slice(0, 5).map((app) => {
+              const getActivityIcon = () => {
+                switch (app.status) {
+                  case 'offer':
+                    return { icon: '⭐', bg: 'bg-yellow-100', color: 'text-yellow-600' }
+                  case 'response':
+                    return { icon: '🎉', bg: 'bg-green-100', color: 'text-green-600' }
+                  case 'viewed':
+                    return { icon: '👀', bg: 'bg-purple-100', color: 'text-purple-600' }
+                  case 'rejected':
+                    return { icon: '❌', bg: 'bg-red-100', color: 'text-red-600' }
+                  default:
+                    return { icon: '📤', bg: 'bg-blue-100', color: 'text-blue-600' }
+                }
+              }
+              const activity = getActivityIcon()
+              const appliedDate = new Date(app.appliedDate)
+              const timeAgo = getTimeAgo(appliedDate)
+              
+              return (
+                <div key={app.id} className="flex items-start gap-4">
+                  <div className={`${activity.bg} ${activity.color} w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0`}>
+                    {activity.icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">
+                      {app.status === 'response' && `Response received from ${app.company}`}
+                      {app.status === 'viewed' && `${app.company} viewed your profile`}
+                      {app.status === 'offer' && `Offer received from ${app.company}!`}
+                      {app.status === 'rejected' && `Application to ${app.company} was not selected`}
+                      {app.status === 'applied' && `Applied to ${app.jobTitle} at ${app.company}`}
+                    </p>
+                    <p className="text-sm text-gray-600">{timeAgo}</p>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
     </div>

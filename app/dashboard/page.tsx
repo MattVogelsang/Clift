@@ -16,6 +16,38 @@ export default function DashboardPage() {
   const loading = useAuthStore((state) => state.loading)
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'matches' | 'applications' | 'analytics' | 'profile' | 'settings'>('matches')
+  const [quickStats, setQuickStats] = useState({
+    applicationsSent: 0,
+    profileViews: 0,
+    responseRate: 0,
+    matchScore: 0,
+  })
+  const [statsLoading, setStatsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchQuickStats() {
+      try {
+        const response = await fetch('/api/user/stats?range=30d')
+        if (response.ok) {
+          const data = await response.json()
+          setQuickStats({
+            applicationsSent: data.totalApplications || 0,
+            profileViews: data.profileViews || 0,
+            responseRate: data.responseRate || 0,
+            matchScore: data.averageMatchScore || 0,
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching quick stats:', error)
+      } finally {
+        setStatsLoading(false)
+      }
+    }
+
+    if (user) {
+      fetchQuickStats()
+    }
+  }, [user])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -55,19 +87,27 @@ export default function DashboardPage() {
           {/* Quick Stats */}
           <div className="grid md:grid-cols-4 gap-6 mb-8">
             <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-              <div className="text-3xl font-bold mb-1">147</div>
+              <div className="text-3xl font-bold mb-1">
+                {statsLoading ? '...' : quickStats.applicationsSent}
+              </div>
               <div className="text-primary-100 text-sm">Applications Sent</div>
             </div>
             <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white">
-              <div className="text-3xl font-bold mb-1">23</div>
+              <div className="text-3xl font-bold mb-1">
+                {statsLoading ? '...' : quickStats.profileViews}
+              </div>
               <div className="text-green-100 text-sm">Profile Views</div>
             </div>
             <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-              <div className="text-3xl font-bold mb-1">8</div>
+              <div className="text-3xl font-bold mb-1">
+                {statsLoading ? '...' : `${quickStats.responseRate.toFixed(1)}%`}
+              </div>
               <div className="text-purple-100 text-sm">Response Rate</div>
             </div>
             <div className="card bg-gradient-to-br from-yellow-500 to-yellow-600 text-white">
-              <div className="text-3xl font-bold mb-1">92%</div>
+              <div className="text-3xl font-bold mb-1">
+                {statsLoading ? '...' : `${quickStats.matchScore}%`}
+              </div>
               <div className="text-yellow-100 text-sm">Match Score</div>
             </div>
           </div>
