@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { supabaseAdmin } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,9 +30,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch user profile from database
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('users')
-      .select('*')
+      .select('subscription_status, subscription_tier, stripe_customer_id')
       .eq('id', user.id)
       .single()
 
