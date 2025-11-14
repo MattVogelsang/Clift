@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, STRIPE_PLANS } from '@/lib/stripe'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,11 +14,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Create or retrieve Stripe customer
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('stripe_customer_id')
       .eq('id', userId)
       .single()
+
+    if (userError) {
+      console.error('Checkout user fetch error:', userError)
+      return NextResponse.json(
+        { error: 'Unable to load account. Please try again.' },
+        { status: 500 }
+      )
+    }
 
     let customerId = user?.stripe_customer_id
 
@@ -32,10 +40,14 @@ export async function POST(request: NextRequest) {
       customerId = customer.id
 
       // Update user with Stripe customer ID
-      await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('users')
         .update({ stripe_customer_id: customerId })
         .eq('id', userId)
+
+      if (updateError) {
+        console.error('Failed to persist Stripe customer ID:', updateError)
+      }
     }
 
     // Create Stripe checkout session
