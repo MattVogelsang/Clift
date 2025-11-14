@@ -3,11 +3,17 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/lib/auth-store'
 import Link from 'next/link'
+import { PLAN_NAME_BY_PRICE_ID } from '@/lib/plan-client'
 
 interface UserProfile {
   subscription_status: string | null
   subscription_tier: string | null
   stripe_customer_id: string | null
+}
+
+const formatPlanName = (tier?: string | null) => {
+  if (!tier) return 'Free'
+  return PLAN_NAME_BY_PRICE_ID[tier] || tier.replace(/_/g, ' ')
 }
 
 export function AccountSettings() {
@@ -85,8 +91,8 @@ export function AccountSettings() {
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-600">Current Plan</label>
-            <p className="text-lg text-gray-900 capitalize">
-              {profile?.subscription_tier || 'Free'}
+            <p className="text-lg text-gray-900">
+              {formatPlanName(profile?.subscription_tier)}
             </p>
           </div>
           <div>

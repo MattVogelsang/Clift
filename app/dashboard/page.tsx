@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
 import { Navbar } from '@/components/Navbar'
 import { ResumeUpload } from '@/components/ResumeUpload'
@@ -10,11 +10,65 @@ import { JobMatches } from '@/components/JobMatches'
 import { ApplicationTracker } from '@/components/ApplicationTracker'
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard'
 import { AccountSettings } from '@/components/AccountSettings'
+import { PLAN_NAME_BY_PRICE_ID } from '@/lib/plan-client'
+
+type AlertState = {
+  type: 'success' | 'error'
+  title: string
+  message: string
+}
+
+type SubscriptionInfo = {
+  status: string
+  tierLabel: string
+  tierRaw: string | null
+  stripeCustomerId: string | null
+  loading: boolean
+}
+
+const getPlanLabel = (tier?: string | null) => {
+  if (!tier) return 'Free'
+  return PLAN_NAME_BY_PRICE_ID[tier] || tier.replace(/_/g, ' ')
+}
+
+const getStatusMeta = (status?: string | null) => {
+  const normalized = (status || 'inactive').toLowerCase()
+  switch (normalized) {
+    case 'active':
+      return {
+        label: 'Active',
+        classes: 'bg-green-100 text-green-800 border border-green-200',
+      }
+    case 'trialing':
+      return {
+        label: 'Trialing',
+        classes: 'bg-blue-100 text-blue-800 border border-blue-200',
+      }
+    case 'past_due':
+    case 'past-due':
+      return {
+        label: 'Past due',
+        classes: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+      }
+    case 'canceled':
+    case 'cancelled':
+      return {
+        label: 'Canceled',
+        classes: 'bg-gray-100 text-gray-700 border border-gray-200',
+      }
+    default:
+      return {
+        label: 'Inactive',
+        classes: 'bg-gray-100 text-gray-700 border border-gray-200',
+      }
+  }
+}
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user)
   const loading = useAuthStore((state) => state.loading)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<'matches' | 'applications' | 'analytics' | 'profile' | 'settings'>('matches')
   const [quickStats, setQuickStats] = useState({
     applicationsSent: 0,
@@ -23,6 +77,15 @@ export default function DashboardPage() {
     matchScore: 0,
   })
   const [statsLoading, setStatsLoading] = useState(true)
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
+    status: 'inactive',
+    tierLabel: 'Free',
+    tierRaw: null,
+    stripeCustomerId: null,
+    loading: true,
+  })
+  const [billingLoading, setBillingLoading] = useState(false)
+  const [alert, setAlert] = useState<AlertState | null>(null)
 
   useEffect(() => {
     async function fetchQuickStats() {
@@ -50,10 +113,102 @@ export default function DashboardPage() {
   }, [user])
 
   useEffect(() => {
+    if (!user) return
+
+    let active = true
+
+    async function fetchSubscription() {
+      try {
+        const response = await fetch('/api/user/profile')
+        if (!response.ok) {
+          throw new Error('Failed to load profile')
+        }
+        const data = await response.json()
+        if (!active) return
+        setSubscriptionInfo({
+          status: data.subscription_status || 'inactive',
+          tierLabel: getPlanLabel(data.subscription_tier),
+          tierRaw: data.subscription_tier || null,
+          stripeCustomerId: data.stripe_customer_id || null,
+          loading: false,
+        })
+      } catch (error) {
+        console.error('Failed to load subscription info:', error)
+        if (active) {
+          setSubscriptionInfo((prev) => ({ ...prev, loading: false }))
+        }
+      }
+    }
+
+    fetchSubscription()
+
+    return () => {
+      active = false
+    }
+  }, [user])
+
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+
+    if (success === 'true') {
+      setAlert({
+        type: 'success',
+        title: 'Payment successful',
+        message: 'Thanks! Your subscription is active. It may take a few seconds for analytics to refresh.',
+      })
+    } else if (error) {
+      const message =
+        error === 'stripe_canceled'
+          ? 'Checkout was canceled before completion. Your card was not charged.'
+          : 'We could not complete your payment. Please try again.'
+      setAlert({
+        type: 'error',
+        title: 'Payment not completed',
+        message,
+      })
+    } else {
+      return
+    }
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('success')
+    params.delete('error')
+    const query = params.toString()
+    router.replace(`/dashboard${query ? `?${query}` : ''}`)
+  }, [searchParams, router])
+
+  useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
     }
   }, [user, loading, router])
+
+  const handleManageSubscription = async () => {
+    setBillingLoading(true)
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+        return
+      }
+      throw new Error(data.error || 'Missing portal URL')
+    } catch (error) {
+      console.error('Failed to open customer portal:', error)
+      setAlert({
+        type: 'error',
+        title: 'Unable to open billing portal',
+        message: 'Please try again in a moment or contact support if the issue persists.',
+      })
+    } finally {
+      setBillingLoading(false)
+    }
+  }
+
+  const statusMeta = getStatusMeta(subscriptionInfo.status)
 
   if (loading) {
     return (
@@ -82,6 +237,67 @@ export default function DashboardPage() {
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Your Job Search Dashboard</h1>
             <p className="text-gray-600">Welcome back! Here's your job search activity.</p>
+          </div>
+
+          {alert && (
+            <div
+              className={`mb-6 flex items-start justify-between gap-4 rounded-lg border px-4 py-3 ${
+                alert.type === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : 'border-red-200 bg-red-50 text-red-800'
+              }`}
+            >
+              <div>
+                <p className="font-semibold">{alert.title}</p>
+                <p className="text-sm">{alert.message}</p>
+              </div>
+              <button
+                onClick={() => setAlert(null)}
+                className="text-xl leading-none text-current opacity-70 hover:opacity-100"
+                aria-label="Dismiss alert"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Subscription Summary */}
+          <div className="card mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Current plan</p>
+              {subscriptionInfo.loading ? (
+                <div className="mt-2 h-6 w-32 animate-pulse rounded bg-gray-200" />
+              ) : (
+                <>
+                  <div className="text-2xl font-semibold text-gray-900">
+                    {subscriptionInfo.tierLabel}
+                  </div>
+                  <span
+                    className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${statusMeta.classes}`}
+                  >
+                    {statusMeta.label}
+                  </span>
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-4">
+              {subscriptionInfo.stripeCustomerId ? (
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={billingLoading}
+                  className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {billingLoading ? 'Opening portal...' : 'Manage billing'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => router.push('/#pricing')}
+                  className="btn-primary"
+                >
+                  Upgrade plan
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Quick Stats */}

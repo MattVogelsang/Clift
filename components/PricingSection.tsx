@@ -4,18 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
 import { STRIPE_PLANS } from '@/lib/stripe'
+import { CLIENT_PLAN_IDS } from '@/lib/plan-client'
 
 export function PricingSection() {
   const plans = Object.entries(STRIPE_PLANS)
   const user = useAuthStore((state) => state.user)
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
-
-  // Client-side Price ID mapping (these are public, not secret)
-  const PRICE_IDS: Record<string, string> = {
-    starter: 'price_1SP9dPAkkVcTj4lDpEgJw86H',
-    professional: 'price_1SP9fAAkkVcTj4lDyXaLp2WE',
-    enterprise: 'price_1SP9fcAkkVcTj4lD1hyKGlMa',
-  }
 
   const handleGetStarted = async (planKey: string, plan: typeof STRIPE_PLANS[keyof typeof STRIPE_PLANS]) => {
     if (!user) {
@@ -25,7 +19,7 @@ export function PricingSection() {
     }
 
     // Use the actual Price ID from our mapping
-    const priceId = PRICE_IDS[planKey] || plan.priceId
+    const priceId = CLIENT_PLAN_IDS[planKey as keyof typeof CLIENT_PLAN_IDS] || plan.priceId
     
     setLoadingPlan(planKey)
     try {
