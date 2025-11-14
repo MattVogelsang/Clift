@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
 import { Navbar } from '@/components/Navbar'
@@ -112,40 +112,34 @@ export default function DashboardPage() {
     }
   }, [user])
 
-  useEffect(() => {
+  const loadSubscription = useCallback(async () => {
     if (!user) return
 
-    let active = true
-
-    async function fetchSubscription() {
-      try {
-        const response = await fetch('/api/user/profile')
-        if (!response.ok) {
-          throw new Error('Failed to load profile')
-        }
-        const data = await response.json()
-        if (!active) return
-        setSubscriptionInfo({
-          status: data.subscription_status || 'inactive',
-          tierLabel: getPlanLabel(data.subscription_tier),
-          tierRaw: data.subscription_tier || null,
-          stripeCustomerId: data.stripe_customer_id || null,
-          loading: false,
-        })
-      } catch (error) {
-        console.error('Failed to load subscription info:', error)
-        if (active) {
-          setSubscriptionInfo((prev) => ({ ...prev, loading: false }))
-        }
+    setSubscriptionInfo((prev) => ({ ...prev, loading: true }))
+    try {
+      const response = await fetch('/api/user/profile')
+      if (!response.ok) {
+        throw new Error('Failed to load profile')
       }
-    }
-
-    fetchSubscription()
-
-    return () => {
-      active = false
+      const data = await response.json()
+      setSubscriptionInfo({
+        status: data.subscription_status || 'inactive',
+        tierLabel: getPlanLabel(data.subscription_tier),
+        tierRaw: data.subscription_tier || null,
+        stripeCustomerId: data.stripe_customer_id || null,
+        loading: false,
+      })
+    } catch (error) {
+      console.error('Failed to load subscription info:', error)
+      setSubscriptionInfo((prev) => ({ ...prev, loading: false }))
     }
   }, [user])
+
+  useEffect(() => {
+    if (user) {
+      loadSubscription()
+    }
+  }, [user, loadSubscription])
 
   useEffect(() => {
     const success = searchParams.get('success')
@@ -157,6 +151,7 @@ export default function DashboardPage() {
         title: 'Payment successful',
         message: 'Thanks! Your subscription is active. It may take a few seconds for analytics to refresh.',
       })
+      loadSubscription()
     } else if (error) {
       const message =
         error === 'stripe_canceled'
@@ -176,7 +171,7 @@ export default function DashboardPage() {
     params.delete('error')
     const query = params.toString()
     router.replace(`/dashboard${query ? `?${query}` : ''}`)
-  }, [searchParams, router])
+  }, [searchParams, router, loadSubscription])
 
   useEffect(() => {
     if (!loading && !user) {
