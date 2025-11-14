@@ -137,5 +137,30 @@ describe('/api/stripe/webhook POST', () => {
       subscription_tier: 'price_123',
     })
   })
+
+  it('skips update when session metadata missing', async () => {
+    const builder = createUsersQueryBuilder()
+    fromMock.mockReturnValue(builder)
+
+    const event = {
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          metadata: null,
+          customer: null,
+        },
+      },
+    } satisfies Partial<Stripe.Event> as Stripe.Event
+
+    mockConstructEvent.mockReturnValue(event)
+
+    const request = buildRequest(event, 'sig_header')
+    const response = await POST(request as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body).toEqual({ received: true })
+    expect(builder.update).not.toHaveBeenCalled()
+  })
 })
 

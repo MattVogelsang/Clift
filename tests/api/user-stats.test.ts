@@ -21,11 +21,11 @@ vi.mock('@supabase/supabase-js', () => ({
 // Import after mocks
 import { GET } from '@/app/api/user/stats/route'
 
-const buildStatsQuery = (data: any) => {
+const buildStatsQuery = (data: any, opts?: { error?: any }) => {
   const query: any = {}
   query.select = vi.fn().mockReturnValue(query)
   query.eq = vi.fn().mockReturnValue(query)
-  query.single = vi.fn().mockResolvedValue({ data })
+  query.single = vi.fn().mockResolvedValue({ data, error: opts?.error ?? null })
   return query
 }
 
@@ -127,6 +127,24 @@ describe('/api/user/stats GET', () => {
       applications: 2,
     })
     expect(body.weeklyData.length).toBeGreaterThan(0)
+  })
+
+  it('returns 500 when Supabase throws', async () => {
+    mockAuthGetUser.mockResolvedValue({
+      data: { user: { id: 'user-3' } },
+      error: null,
+    })
+
+    mockFrom.mockImplementation(() => {
+      throw new Error('Supabase outage')
+    })
+
+    const request = new NextRequest('http://localhost/api/user/stats')
+    const response = await GET(request)
+    const body = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(body).toEqual({ error: 'Internal server error' })
   })
 })
 
