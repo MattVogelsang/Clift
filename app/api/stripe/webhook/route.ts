@@ -7,9 +7,6 @@ export async function POST(request: NextRequest) {
   const body = await request.text()
   const signature = request.headers.get('stripe-signature')
 
-  console.log('Active webhook secret on server:', process.env.STRIPE_WEBHOOK_SECRET)
-  console.log('Stripe signature header:', signature)
-
   if (!signature) {
     return NextResponse.json(
       { error: 'Missing stripe signature' },
