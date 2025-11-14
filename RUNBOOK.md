@@ -1,4 +1,4 @@
-# 🔧 AI SaaS Platform Runbook
+# 🔧 AI SaaS Platform Runbook ![CI Status](https://github.com/MattVogelsang/Clift/actions/workflows/ci.yml/badge.svg)
 
 One file to go from zero → working environment. Work through each section in
 order; every step links back to the detailed references if you need more depth.
