@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database, 'public'>(supabaseUrl, supabaseAnonKey)
 
 export type Database = {
   public: {
@@ -33,6 +33,7 @@ export type Database = {
           subscription_tier?: string | null
           stripe_customer_id?: string | null
         }
+        Relationships: []
       }
       ai_requests: {
         Row: {
@@ -59,8 +60,13 @@ export type Database = {
           created_at?: string
           tokens_used?: number | null
         }
+        Relationships: []
       }
     }
+    Views: {}
+    Functions: {}
+    Enums: {}
+    CompositeTypes: {}
   }
 }
 

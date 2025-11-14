@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { supabaseAdmin } from '@/lib/supabase-server'
+import type { Database } from '@/lib/supabase'
 import Stripe from 'stripe'
+
+type UserUpdate = Database['public']['Tables']['users']['Update']
+const usersTable = () => supabaseAdmin.from('users') as any
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -37,12 +41,13 @@ export async function POST(request: NextRequest) {
         const userId = session.metadata?.user_id
 
         if (userId && session.customer) {
-          await supabaseAdmin
-            .from('users')
-            .update({
-              stripe_customer_id: session.customer as string,
-              subscription_status: 'active',
-            })
+          const updatePayload: UserUpdate = {
+            stripe_customer_id: session.customer as string,
+            subscription_status: 'active',
+          }
+
+          await usersTable()
+            .update(updatePayload)
             .eq('id', userId)
         }
         break
@@ -51,20 +56,25 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.updated':
       case 'customer.subscription.created': {
         const subscription = event.data.object as Stripe.Subscription
-        
-        const { data: user } = await supabaseAdmin
-          .from('users')
+
+        const { data: user } = (await usersTable()
           .select('id')
           .eq('stripe_customer_id', subscription.customer as string)
-          .single()
+          .single()) as { data: { id: string } | null }
 
         if (user) {
-          await supabaseAdmin
-            .from('users')
-            .update({
-              subscription_status: subscription.status,
-              subscription_tier: subscription.items.data[0]?.price.id,
-            })
+          const tierId =
+            (typeof subscription.items.data[0]?.price === 'string'
+              ? subscription.items.data[0]?.price
+              : subscription.items.data[0]?.price?.id) ?? null
+
+          const updatePayload: UserUpdate = {
+            subscription_status: subscription.status,
+            subscription_tier: tierId,
+          }
+
+          await usersTable()
+            .update(updatePayload)
             .eq('id', user.id)
         }
         break
@@ -72,20 +82,20 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
-        
-        const { data: user } = await supabaseAdmin
-          .from('users')
+
+        const { data: user } = (await usersTable()
           .select('id')
           .eq('stripe_customer_id', subscription.customer as string)
-          .single()
+          .single()) as { data: { id: string } | null }
 
         if (user) {
-          await supabaseAdmin
-            .from('users')
-            .update({
-              subscription_status: 'canceled',
-              subscription_tier: null,
-            })
+          const updatePayload: UserUpdate = {
+            subscription_status: 'canceled',
+            subscription_tier: null,
+          }
+
+          await usersTable()
+            .update(updatePayload)
             .eq('id', user.id)
         }
         break
