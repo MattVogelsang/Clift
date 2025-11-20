@@ -143,29 +143,6 @@ export function Testimonials() {
           ))}
         </div>
 
-        {/* Trust Badges */}
-        <div className="grid md:grid-cols-4 gap-8 mt-16">
-          <div className="text-center">
-            <div className="text-4xl mb-3">🎯</div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">92%</div>
-            <div className="text-sm text-gray-600">Average Match Score</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl mb-3">⚡</div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">3x</div>
-            <div className="text-sm text-gray-600">Faster Application Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl mb-3">💼</div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">2,500+</div>
-            <div className="text-sm text-gray-600">People Hired</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl mb-3">⭐</div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">4.9/5</div>
-            <div className="text-sm text-gray-600">Customer Rating</div>
-          </div>
-        </div>
       </div>
     </section>
   )
