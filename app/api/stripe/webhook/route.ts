@@ -41,14 +41,42 @@ export async function POST(request: NextRequest) {
         const userId = session.metadata?.user_id
 
         if (userId && session.customer) {
+          // Fetch the subscription to get the price ID
+          let subscriptionTier: string | null = null
+          if (session.subscription) {
+            try {
+              const subscription = await stripe.subscriptions.retrieve(
+                typeof session.subscription === 'string'
+                  ? session.subscription
+                  : session.subscription.id
+              )
+              const priceId =
+                typeof subscription.items.data[0]?.price === 'string'
+                  ? subscription.items.data[0]?.price
+                  : subscription.items.data[0]?.price?.id
+              subscriptionTier = priceId || null
+            } catch (error) {
+              console.error('[Webhook] Error fetching subscription:', error)
+            }
+          } else {
+            console.warn('[Webhook] No subscription ID in checkout session')
+          }
+
           const updatePayload: UserUpdate = {
             stripe_customer_id: session.customer as string,
             subscription_status: 'active',
+            subscription_tier: subscriptionTier,
           }
 
-          await usersTable()
+          const { error: updateError } = await usersTable()
             .update(updatePayload)
             .eq('id', userId)
+
+          if (updateError) {
+            console.error('[Webhook] Failed to update user:', updateError)
+          }
+        } else {
+          console.warn('[Webhook] Missing userId or customer in checkout session')
         }
         break
       }

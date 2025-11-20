@@ -27,7 +27,7 @@ type SubscriptionInfo = {
 }
 
 const getPlanLabel = (tier?: string | null) => {
-  if (!tier) return 'Free'
+  if (!tier) return 'No active subscription'
   return PLAN_NAME_BY_PRICE_ID[tier] || tier.replace(/_/g, ' ')
 }
 
@@ -67,6 +67,7 @@ const getStatusMeta = (status?: string | null) => {
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user)
   const loading = useAuthStore((state) => state.loading)
+  const checkUser = useAuthStore((state) => state.checkUser)
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<'matches' | 'applications' | 'analytics' | 'profile' | 'settings'>('matches')
@@ -79,7 +80,7 @@ export default function DashboardPage() {
   const [statsLoading, setStatsLoading] = useState(true)
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
     status: 'inactive',
-    tierLabel: 'Free',
+    tierLabel: 'No active subscription',
     tierRaw: null,
     stripeCustomerId: null,
     loading: true,
@@ -113,15 +114,28 @@ export default function DashboardPage() {
   }, [user])
 
   const loadSubscription = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      return
+    }
 
     setSubscriptionInfo((prev) => ({ ...prev, loading: true }))
     try {
-      const response = await fetch('/api/user/profile')
+      const response = await fetch('/api/user/profile', {
+        credentials: 'include', // Ensure cookies are sent
+      })
+      
       if (!response.ok) {
-        throw new Error('Failed to load profile')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('[Dashboard] Profile API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        })
+        throw new Error(`Failed to load profile: ${response.status}`)
       }
+      
       const data = await response.json()
+      
       setSubscriptionInfo({
         status: data.subscription_status || 'inactive',
         tierLabel: getPlanLabel(data.subscription_tier),
@@ -130,10 +144,15 @@ export default function DashboardPage() {
         loading: false,
       })
     } catch (error) {
-      console.error('Failed to load subscription info:', error)
+      console.error('[Dashboard] Failed to load subscription info:', error)
       setSubscriptionInfo((prev) => ({ ...prev, loading: false }))
     }
   }, [user])
+
+  useEffect(() => {
+    // Re-check user session on mount (especially after Stripe redirect)
+    checkUser()
+  }, [checkUser])
 
   useEffect(() => {
     if (user) {
@@ -149,9 +168,34 @@ export default function DashboardPage() {
       setAlert({
         type: 'success',
         title: 'Payment successful',
-        message: 'Thanks! Your subscription is active. It may take a few seconds for analytics to refresh.',
+        message: 'Thanks! Your subscription is active. Syncing subscription data...',
       })
-      loadSubscription()
+      // Wait for user to be authenticated, then sync
+      const syncSubscription = async () => {
+        // Wait a bit for auth to be ready
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        // Re-check user to ensure session is loaded
+        await checkUser()
+        // Wait a bit more for state to update
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        
+        // Now try to sync
+        try {
+          const res = await fetch('/api/stripe/sync-subscription', { method: 'POST' })
+          const data = await res.json()
+          if (!data.success) {
+            console.warn('Sync failed, webhook should have handled it:', data)
+          }
+        } catch (err) {
+          console.error('Sync error:', err)
+        } finally {
+          // Always reload subscription info
+          setTimeout(() => {
+            loadSubscription()
+          }, 1000)
+        }
+      }
+      syncSubscription()
     } else if (error) {
       const message =
         error === 'stripe_canceled'
@@ -276,6 +320,17 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="flex flex-wrap gap-4">
+              <button
+                onClick={() => {
+                  checkUser()
+                  loadSubscription()
+                }}
+                disabled={subscriptionInfo.loading}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+                title="Refresh subscription status"
+              >
+                🔄 Refresh
+              </button>
               {subscriptionInfo.stripeCustomerId ? (
                 <button
                   onClick={handleManageSubscription}
