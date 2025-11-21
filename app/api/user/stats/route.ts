@@ -13,17 +13,6 @@ export async function GET(request: NextRequest) {
     const accessToken = cookieStore.get('sb-access-token')?.value
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          // Not used in server-side
-        },
-        remove(name: string, options: any) {
-          // Not used in server-side
-        },
-      },
       global: {
         headers: accessToken ? {
           Authorization: `Bearer ${accessToken}`,

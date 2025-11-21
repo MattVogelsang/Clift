@@ -47,17 +47,17 @@ export async function POST(request: NextRequest) {
         id: job.external_id,
         title: job.title,
         company: job.company,
-        location: job.location,
-        salary: job.salary,
-        description: job.description,
-        requirements: [],
+        location: job.location || '',
+        salary: job.salary || '',
+        description: job.description || '',
+        requirements: job.requirements || [],
         source: job.source,
         url: job.url,
-        postedDate: new Date(job.posted_date),
+        postedDate: job.posted_date ? new Date(job.posted_date) : new Date(),
       },
       {
-        name: profile.full_name,
-        experience: profile.experience_summary,
+        name: profile.full_name || '',
+        experience: profile.experience_summary || '',
         skills: profile.skills || [],
       }
     )
@@ -68,21 +68,21 @@ export async function POST(request: NextRequest) {
         id: job.external_id,
         title: job.title,
         company: job.company,
-        location: job.location,
-        salary: job.salary,
-        description: job.description,
-        requirements: [],
+        location: job.location || '',
+        salary: job.salary || '',
+        description: job.description || '',
+        requirements: job.requirements || [],
         source: job.source,
         url: job.url,
-        postedDate: new Date(job.posted_date),
+        postedDate: job.posted_date ? new Date(job.posted_date) : new Date(),
       },
       {
         userId,
-        resumeUrl: profile.resume_url,
+        resumeUrl: profile.resume_url || '',
         coverLetter,
         email: profile.email,
-        phone: profile.phone,
-        linkedin: profile.linkedin_url,
+        phone: profile.phone || '',
+        linkedin: profile.linkedin_url || '',
       }
     )
 
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         job_id: jobId,
         cover_letter: coverLetter,
         status: 'applied',
-        applied_at: result.appliedAt,
+        applied_at: result.appliedAt ? result.appliedAt.toISOString() : new Date().toISOString(),
       })
     }
 

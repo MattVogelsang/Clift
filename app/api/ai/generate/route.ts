@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     // Store the request in the database
     await supabaseAdmin.from('ai_requests').insert({
       user_id: userId,
+      request_type: 'text_generation',
       prompt,
       response: aiResponse.text,
       tokens_used: aiResponse.tokensUsed,

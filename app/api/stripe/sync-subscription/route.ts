@@ -17,12 +17,15 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies()
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    
+    // Get access token from cookie
+    const accessToken = cookieStore.get('sb-access-token')?.value
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
+      global: {
+        headers: accessToken ? {
+          Authorization: `Bearer ${accessToken}`,
+        } : {},
       },
     })
 

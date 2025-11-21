@@ -46,13 +46,13 @@ export async function POST(request: NextRequest) {
           external_id: job.id,
           title: job.title,
           company: job.company,
-          location: job.location,
-          salary: job.salary,
-          description: job.description,
+          location: job.location || null,
+          salary: job.salary || null,
+          description: job.description || null,
           source: job.source,
           url: job.url,
-          match_score: job.matchScore,
-          posted_date: job.postedDate,
+          match_score: job.matchScore || null,
+          posted_date: job.postedDate ? job.postedDate.toISOString() : null,
         }))
       )
     }

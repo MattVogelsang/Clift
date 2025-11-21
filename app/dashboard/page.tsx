@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
 import { Navbar } from '@/components/Navbar'
@@ -64,7 +64,7 @@ const getStatusMeta = (status?: string | null) => {
   }
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const user = useAuthStore((state) => state.user)
   const loading = useAuthStore((state) => state.loading)
   const checkUser = useAuthStore((state) => state.checkUser)
@@ -161,6 +161,7 @@ export default function DashboardPage() {
   }, [user, loadSubscription])
 
   useEffect(() => {
+    if (!searchParams) return
     const success = searchParams.get('success')
     const error = searchParams.get('error')
 
@@ -448,5 +449,23 @@ export default function DashboardPage() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </>
+    }>
+      <DashboardContent />
+    </Suspense>
   )
 }

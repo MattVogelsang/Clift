@@ -147,7 +147,7 @@ async function applyToJobForUser(job: any, profile: any) {
         job_id: job.id,
         cover_letter: coverLetter,
         status: 'applied',
-        applied_at: result.appliedAt
+        applied_at: result.appliedAt ? result.appliedAt.toISOString() : new Date().toISOString(),
       })
 
       // Mark job as applied
