@@ -45,6 +45,11 @@ const buildRequest = (body: any, signature?: string) =>
     ),
   } as unknown as Request)
 
+// Helper to create properly typed mock Stripe events
+const createMockEvent = (eventData: any): Stripe.Event => {
+  return eventData as unknown as Stripe.Event
+}
+
 describe('/api/stripe/webhook POST', () => {
   beforeEach(() => {
     fromMock.mockReset()
@@ -79,7 +84,7 @@ describe('/api/stripe/webhook POST', () => {
     const updateBuilder = createUsersQueryBuilder()
     fromMock.mockReturnValue(updateBuilder)
 
-    const event = {
+    const event = createMockEvent({
       type: 'checkout.session.completed',
       data: {
         object: {
@@ -87,7 +92,7 @@ describe('/api/stripe/webhook POST', () => {
           customer: 'cus_123',
         },
       },
-    } as unknown as Stripe.Event
+    })
 
     mockConstructEvent.mockReturnValue(event)
 
@@ -107,7 +112,7 @@ describe('/api/stripe/webhook POST', () => {
     const builder = createUsersQueryBuilder({ user: { id: 'user-321' } })
     fromMock.mockReturnValue(builder)
 
-    const event = {
+    const event = createMockEvent({
       type: 'customer.subscription.updated',
       data: {
         object: {
@@ -122,7 +127,7 @@ describe('/api/stripe/webhook POST', () => {
           },
         },
       },
-    } as unknown as Stripe.Event
+    })
 
     mockConstructEvent.mockReturnValue(event)
 
@@ -142,7 +147,7 @@ describe('/api/stripe/webhook POST', () => {
     const builder = createUsersQueryBuilder()
     fromMock.mockReturnValue(builder)
 
-    const event = {
+    const event = createMockEvent({
       type: 'checkout.session.completed',
       data: {
         object: {
@@ -150,7 +155,7 @@ describe('/api/stripe/webhook POST', () => {
           customer: null,
         },
       },
-    } as unknown as Stripe.Event
+    })
 
     mockConstructEvent.mockReturnValue(event)
 
