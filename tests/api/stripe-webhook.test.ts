@@ -2,10 +2,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type Stripe from 'stripe'
 
 const mockConstructEvent = vi.hoisted(() => vi.fn())
+const mockSubscriptionsRetrieve = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/stripe', () => ({
   stripe: {
     webhooks: {
       constructEvent: mockConstructEvent,
+    },
+    subscriptions: {
+      retrieve: mockSubscriptionsRetrieve,
     },
   },
 }))
@@ -46,14 +50,29 @@ const buildRequest = (body: any, signature?: string) =>
   } as unknown as Request)
 
 // Helper to create properly typed mock Stripe events
-const createMockEvent = (eventData: any): Stripe.Event => {
-  return eventData as unknown as Stripe.Event
+// We need to create minimal valid Stripe.Event objects for testing
+function createMockEvent<T extends Stripe.Event.Type>(
+  type: T,
+  data: Partial<Stripe.Event.Data>
+): Stripe.Event {
+  return {
+    id: `evt_test_${Math.random().toString(36).substring(7)}`,
+    object: 'event',
+    api_version: '2023-10-16',
+    created: Math.floor(Date.now() / 1000),
+    livemode: false,
+    pending_webhooks: 1,
+    request: { id: 'req_test', idempotency_key: null },
+    type,
+    data: data as Stripe.Event.Data,
+  } as Stripe.Event
 }
 
 describe('/api/stripe/webhook POST', () => {
   beforeEach(() => {
     fromMock.mockReset()
     mockConstructEvent.mockReset()
+    mockSubscriptionsRetrieve.mockReset()
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test'
   })
 
@@ -84,17 +103,41 @@ describe('/api/stripe/webhook POST', () => {
     const updateBuilder = createUsersQueryBuilder()
     fromMock.mockReturnValue(updateBuilder)
 
-    const event = createMockEvent({
-      type: 'checkout.session.completed',
-      data: {
-        object: {
-          metadata: { user_id: 'user-123' },
-          customer: 'cus_123',
-        },
-      },
+    const sessionObject = {
+      id: 'cs_test',
+      object: 'checkout.session',
+      metadata: { user_id: 'user-123' },
+      customer: 'cus_123',
+      subscription: 'sub_test',
+      mode: 'subscription',
+      payment_status: 'paid',
+      status: 'complete',
+    } as unknown as Stripe.Checkout.Session
+
+    const event = createMockEvent('checkout.session.completed', {
+      object: sessionObject,
     })
 
     mockConstructEvent.mockReturnValue(event)
+
+    // Mock the subscription retrieval
+    mockSubscriptionsRetrieve.mockResolvedValue({
+      id: 'sub_test',
+      object: 'subscription',
+      items: {
+        object: 'list',
+        data: [
+          {
+            id: 'si_test',
+            object: 'subscription_item',
+            price: { id: 'price_123', object: 'price' },
+            quantity: 1,
+          },
+        ],
+        has_more: false,
+        url: '',
+      },
+    } as unknown as Stripe.Subscription)
 
     const request = buildRequest(event, 'sig_header')
     const response = await POST(request as any)
@@ -105,6 +148,7 @@ describe('/api/stripe/webhook POST', () => {
     expect(updateBuilder.update).toHaveBeenCalledWith({
       stripe_customer_id: 'cus_123',
       subscription_status: 'active',
+      subscription_tier: 'price_123',
     })
   })
 
@@ -112,21 +156,28 @@ describe('/api/stripe/webhook POST', () => {
     const builder = createUsersQueryBuilder({ user: { id: 'user-321' } })
     fromMock.mockReturnValue(builder)
 
-    const event = createMockEvent({
-      type: 'customer.subscription.updated',
-      data: {
-        object: {
-          customer: 'cus_111',
-          status: 'active',
-          items: {
-            data: [
-              {
-                price: { id: 'price_123' },
-              },
-            ],
+    const subscriptionObject = {
+      id: 'sub_test',
+      object: 'subscription',
+      customer: 'cus_111',
+      status: 'active',
+      items: {
+        object: 'list',
+        data: [
+          {
+            id: 'si_test',
+            object: 'subscription_item',
+            price: { id: 'price_123', object: 'price' },
+            quantity: 1,
           },
-        },
+        ],
+        has_more: false,
+        url: '',
       },
+    } as unknown as Stripe.Subscription
+
+    const event = createMockEvent('customer.subscription.updated', {
+      object: subscriptionObject,
     })
 
     mockConstructEvent.mockReturnValue(event)
@@ -147,14 +198,19 @@ describe('/api/stripe/webhook POST', () => {
     const builder = createUsersQueryBuilder()
     fromMock.mockReturnValue(builder)
 
-    const event = createMockEvent({
-      type: 'checkout.session.completed',
-      data: {
-        object: {
-          metadata: null,
-          customer: null,
-        },
-      },
+    const sessionObject = {
+      id: 'cs_test',
+      object: 'checkout.session',
+      metadata: null,
+      customer: null,
+      subscription: null,
+      mode: 'subscription',
+      payment_status: 'unpaid',
+      status: 'open',
+    } as unknown as Stripe.Checkout.Session
+
+    const event = createMockEvent('checkout.session.completed', {
+      object: sessionObject,
     })
 
     mockConstructEvent.mockReturnValue(event)
