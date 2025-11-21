@@ -87,7 +87,7 @@ describe('/api/stripe/webhook POST', () => {
           customer: 'cus_123',
         },
       },
-    } satisfies Partial<Stripe.Event> as Stripe.Event
+    } as unknown as Stripe.Event
 
     mockConstructEvent.mockReturnValue(event)
 
@@ -122,7 +122,7 @@ describe('/api/stripe/webhook POST', () => {
           },
         },
       },
-    } satisfies Partial<Stripe.Event> as Stripe.Event
+    } as unknown as Stripe.Event
 
     mockConstructEvent.mockReturnValue(event)
 
@@ -150,7 +150,7 @@ describe('/api/stripe/webhook POST', () => {
           customer: null,
         },
       },
-    } satisfies Partial<Stripe.Event> as Stripe.Event
+    } as unknown as Stripe.Event
 
     mockConstructEvent.mockReturnValue(event)
 
