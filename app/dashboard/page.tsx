@@ -216,7 +216,7 @@ function DashboardContent() {
     params.delete('error')
     const query = params.toString()
     router.replace(`/dashboard${query ? `?${query}` : ''}`)
-  }, [searchParams, router, loadSubscription])
+  }, [searchParams, router, loadSubscription, checkUser])
 
   useEffect(() => {
     if (!loading && !user) {
