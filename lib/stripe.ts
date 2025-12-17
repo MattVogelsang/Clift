@@ -8,7 +8,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_place
 export const STRIPE_PLANS = {
   starter: {
     name: 'Basic',
-    price: 29.99,
+    price: 5,
     priceId: process.env.STRIPE_STARTER_PRICE_ID || 'price_starter',
     applications: 50,
     features: [
@@ -22,7 +22,7 @@ export const STRIPE_PLANS = {
   },
   professional: {
     name: 'Professional',
-    price: 79.99,
+    price: 25,
     priceId: process.env.STRIPE_PROFESSIONAL_PRICE_ID || 'price_professional',
     applications: 150,
     features: [
@@ -37,7 +37,7 @@ export const STRIPE_PLANS = {
   },
   enterprise: {
     name: 'Premium',
-    price: 129.99,
+    price: 80,
     priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || 'price_enterprise',
     applications: 'Unlimited',
     features: [
