@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
-import { Navbar } from '@/components/Navbar'
+import { Navbar } from '@/components/layout/Navbar'
 import { STRIPE_PLANS } from '@/lib/stripe'
 
 function SignUpContent() {
@@ -98,16 +98,24 @@ function SignUpContent() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-16">
-          <div className="max-w-md w-full card text-center">
-            <div className="text-green-500 text-6xl mb-4">✓</div>
-            <h1 className="text-3xl font-bold mb-4">Check Your Email</h1>
-            <p className="text-gray-600 mb-6">
-              We've sent you a confirmation email. Please click the link in the email to verify your account.
-            </p>
-            <Link href="/login" className="btn-primary inline-block">
-              Go to Login
-            </Link>
+        <div className="min-h-screen bg-background-dark flex items-center justify-center px-4 pt-20 pb-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-950/30 via-purple-950/20 to-background-dark pointer-events-none" />
+          <div className="relative max-w-md w-full">
+            <div className="card-glass text-center animate-scale-in">
+              <div className="text-6xl mb-6">
+                <span className="text-accent-emerald">✓</span>
+              </div>
+              <h1 className="text-4xl font-bold mb-4">
+                <span className="text-white">Check Your</span>{' '}
+                <span className="text-gradient">Email</span>
+              </h1>
+              <p className="text-neutral-400 mb-8 leading-relaxed">
+                We've sent you a confirmation email. Please click the link in the email to verify your account.
+              </p>
+              <Link href="/login" className="btn-primary inline-block">
+                Go to Login
+              </Link>
+            </div>
           </div>
         </div>
       </>
@@ -117,25 +125,36 @@ function SignUpContent() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-16 pb-8">
-        <div className="max-w-md w-full">
-          <div className="card">
-            <h1 className="text-3xl font-bold text-center mb-2">Start Your Job Search</h1>
-            <p className="text-center text-gray-600 mb-6">
-              Selected plan: <span className="font-semibold text-primary-600">
-                {STRIPE_PLANS[selectedPlan as keyof typeof STRIPE_PLANS]?.name} - {STRIPE_PLANS[selectedPlan as keyof typeof STRIPE_PLANS]?.applications} applications/month
-              </span>
-            </p>
+      <div className="min-h-screen bg-background-dark flex items-center justify-center px-4 pt-20 pb-8 relative overflow-hidden">
+        {/* Background Gradient Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-950/30 via-purple-950/20 to-background-dark pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        
+        <div className="relative max-w-md w-full">
+          <div className="card-glass animate-scale-in">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold mb-2">
+                <span className="text-white">Start Your</span>{' '}
+                <span className="text-gradient">Job Search</span>
+              </h1>
+              <p className="text-neutral-400 text-sm">
+                Selected plan:{' '}
+                <span className="font-semibold text-primary-400">
+                  {STRIPE_PLANS[selectedPlan as keyof typeof STRIPE_PLANS]?.name} - {STRIPE_PLANS[selectedPlan as keyof typeof STRIPE_PLANS]?.applications} applications/month
+                </span>
+              </p>
+            </div>
             
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm">
                 {error}
               </div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
                   Email
                 </label>
                 <input
@@ -143,13 +162,13 @@ function SignUpContent() {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-field"
+                  className="input-field-glass"
                   required
                 />
               </div>
               
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2">
                   Password
                 </label>
                 <input
@@ -157,14 +176,14 @@ function SignUpContent() {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field"
+                  className="input-field-glass"
                   required
                   minLength={8}
                 />
               </div>
               
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-300 mb-2">
                   Confirm Password
                 </label>
                 <input
@@ -172,27 +191,27 @@ function SignUpContent() {
                   id="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="input-field"
+                  className="input-field-glass"
                   required
                 />
               </div>
               
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="terms"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-1"
+                  className="mt-1 w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-primary-500 focus:ring-primary-500 focus:ring-2"
                   required
                 />
-                <label htmlFor="terms" className="text-sm text-gray-600">
+                <label htmlFor="terms" className="text-sm text-neutral-400 leading-relaxed">
                   I agree to the{' '}
-                  <Link href="/legal/terms" className="text-primary-600 hover:text-primary-700" target="_blank">
+                  <Link href="/legal/terms" className="text-primary-400 hover:text-primary-300 transition-colors" target="_blank">
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link href="/legal/privacy" className="text-primary-600 hover:text-primary-700" target="_blank">
+                  <Link href="/legal/privacy" className="text-primary-400 hover:text-primary-300 transition-colors" target="_blank">
                     Privacy Policy
                   </Link>
                 </label>
@@ -207,9 +226,9 @@ function SignUpContent() {
               </button>
             </form>
             
-            <p className="mt-6 text-center text-gray-600">
+            <p className="mt-6 text-center text-neutral-400">
               Already have an account?{' '}
-              <Link href="/login" className="text-primary-600 hover:text-primary-700 font-semibold">
+              <Link href="/login" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
                 Sign in
               </Link>
             </p>
@@ -225,10 +244,10 @@ export default function SignUpPage() {
     <Suspense fallback={
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
+        <div className="min-h-screen bg-background-dark pt-20 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p className="text-neutral-400">Loading...</p>
           </div>
         </div>
       </>

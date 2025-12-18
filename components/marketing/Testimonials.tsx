@@ -80,51 +80,52 @@ export function Testimonials() {
   ]
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+    <section className="relative py-32 px-6 md:px-8 bg-gradient-to-b from-neutral-900 to-background-dark border-t border-neutral-800">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <div className="inline-block mb-4">
-            <span className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-semibold">
+          <div className="inline-block mb-6">
+            <span className="badge-primary text-sm font-semibold">
               ⭐ Trusted by 10,000+ Job Seekers
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Real People. Real Results.
+          <h2 className="mb-4">
+            <span className="text-white">Real People.</span>{' '}
+            <span className="text-gradient">Real Results.</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-neutral-300 max-w-2xl mx-auto leading-relaxed">
             Join thousands of professionals who landed their dream jobs with CareerLift
           </p>
         </div>
 
-        {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {/* Premium Testimonials Grid */}
+        <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((testimonial) => (
             <div 
               key={testimonial.id}
-              className="card hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+              className="card-premium group"
             >
               {/* Rating Stars */}
-              <div className="flex gap-1 mb-4">
+              <div className="flex gap-1 mb-5">
                 {[...Array(testimonial.rating)].map((_, i) => (
-                  <span key={i} className="text-yellow-400 text-xl">⭐</span>
+                  <span key={i} className="text-accent-gold text-lg">⭐</span>
                 ))}
               </div>
 
               {/* Testimonial Text */}
-              <p className="text-gray-700 mb-6 leading-relaxed">
+              <p className="text-neutral-300 mb-6 leading-relaxed italic">
                 "{testimonial.text}"
               </p>
 
               {/* Result Badge */}
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 mb-4">
-                <div className="text-green-800 font-bold text-center">
+              <div className="bg-gradient-primary/10 border border-primary-500/30 rounded-xl p-3 mb-5">
+                <div className="text-primary-400 font-bold text-center text-sm">
                   ✓ {testimonial.result}
                 </div>
               </div>
 
               {/* Author */}
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+              <div className="flex items-center gap-3 pt-5 border-t border-neutral-800">
+                <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-primary-500/30">
                   <Image
                     src={testimonial.image}
                     alt={testimonial.name}
@@ -134,9 +135,9 @@ export function Testimonials() {
                   />
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900">{testimonial.name}</div>
-                  <div className="text-sm text-gray-600">{testimonial.role}</div>
-                  <div className="text-sm text-primary-600 font-semibold">{testimonial.company}</div>
+                  <div className="font-bold text-white">{testimonial.name}</div>
+                  <div className="text-sm text-neutral-400">{testimonial.role}</div>
+                  <div className="text-sm text-neutral-300 font-semibold">{testimonial.company}</div>
                 </div>
               </div>
             </div>

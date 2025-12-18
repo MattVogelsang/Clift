@@ -3,11 +3,37 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
+// Validate environment variables
+if (typeof window !== 'undefined') {
+  // Client-side: log if using placeholders
+  if (supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder')) {
+    console.error('❌ Supabase environment variables are missing or not loaded!')
+    console.error('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
+    console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing')
+  } else {
+    // Log the actual URL being used (for debugging)
+    console.log('🔗 Using Supabase URL:', supabaseUrl.replace(/\/\/.*@/, '//***@')) // Hide credentials if any
+  }
+}
+
 export const supabase = createClient<Database, 'public'>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+  },
+  global: {
+    fetch: (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+        },
+      }).catch((error) => {
+        console.error('Supabase fetch error:', error)
+        throw new Error('Failed to connect to authentication service. Please check your internet connection.')
+      })
+    },
   },
 })
 

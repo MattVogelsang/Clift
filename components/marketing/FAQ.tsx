@@ -55,13 +55,14 @@ export function FAQ() {
   ]
 
   return (
-    <section className="py-20 px-4 bg-white">
+    <section className="relative py-32 px-6 md:px-8 bg-background-dark border-t border-neutral-800">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Frequently Asked Questions
+          <h2 className="mb-4">
+            <span className="text-white">Frequently Asked</span>{' '}
+            <span className="text-gradient">Questions</span>
           </h2>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-neutral-300 leading-relaxed">
             Everything you need to know about CareerLift
           </p>
         </div>
@@ -70,16 +71,16 @@ export function FAQ() {
           {faqs.map((faq, index) => (
             <div 
               key={index}
-              className="border-2 border-gray-200 rounded-xl overflow-hidden hover:border-primary-300 transition-colors"
+              className="border border-neutral-800 rounded-xl overflow-hidden hover:border-primary-500/50 transition-all duration-300 bg-neutral-900/50 backdrop-blur-sm"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-5 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-neutral-800/30 transition-colors"
               >
-                <span className="text-lg font-semibold text-gray-900 pr-8">
+                <span className="text-lg font-semibold text-white pr-8">
                   {faq.question}
                 </span>
-                <span className={`text-2xl text-primary-600 transform transition-transform ${
+                <span className={`text-xl text-primary-400 transform transition-transform flex-shrink-0 ${
                   openIndex === index ? 'rotate-180' : ''
                 }`}>
                   ↓
@@ -87,8 +88,8 @@ export function FAQ() {
               </button>
               
               {openIndex === index && (
-                <div className="px-6 py-5 bg-gray-50 border-t border-gray-200">
-                  <p className="text-gray-700 leading-relaxed">
+                <div className="px-6 py-5 bg-neutral-900/30 border-t border-neutral-800 animate-fade-in">
+                  <p className="text-neutral-300 leading-relaxed">
                     {faq.answer}
                   </p>
                 </div>
@@ -98,9 +99,12 @@ export function FAQ() {
         </div>
 
         {/* Contact CTA */}
-        <div id="faq" className="mt-12 text-center p-8 bg-gradient-to-r from-primary-50 to-blue-50 rounded-2xl">
-          <h3 className="text-2xl font-bold text-gray-900 mb-3">Still have questions?</h3>
-          <p className="text-gray-600 mb-6">
+        <div id="faq" className="mt-12 text-center p-8 card-premium">
+          <h3 className="text-2xl font-bold text-white mb-3">
+            <span className="text-white">Still have</span>{' '}
+            <span className="text-gradient">questions?</span>
+          </h3>
+          <p className="text-neutral-300 mb-6">
             Our team is here to help you succeed in your job search
           </p>
           <Link href="/contact" className="btn-primary inline-block">

@@ -3,8 +3,8 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
-import { Navbar } from '@/components/Navbar'
-import { OnboardingWizard } from '@/components/OnboardingWizard'
+import { Navbar } from '@/components/layout/Navbar'
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
 
 export default function OnboardingPage() {
   const user = useAuthStore((state) => state.user)

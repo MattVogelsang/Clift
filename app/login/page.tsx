@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
-import { Navbar } from '@/components/Navbar'
+import { Navbar } from '@/components/layout/Navbar'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -33,20 +33,31 @@ export default function LoginPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-16">
-        <div className="max-w-md w-full">
-          <div className="card">
-            <h1 className="text-3xl font-bold text-center mb-8">Welcome Back</h1>
+      <div className="min-h-screen bg-background-dark flex items-center justify-center px-4 pt-20 pb-8 relative overflow-hidden">
+        {/* Background Gradient Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-950/30 via-purple-950/20 to-background-dark pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        
+        <div className="relative max-w-md w-full">
+          <div className="card-glass animate-scale-in">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold mb-2">
+                <span className="text-white">Welcome</span>{' '}
+                <span className="text-gradient">Back</span>
+              </h1>
+              <p className="text-neutral-400">Sign in to continue your job search</p>
+            </div>
             
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm">
                 {error}
               </div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
                   Email
                 </label>
                 <input
@@ -54,13 +65,13 @@ export default function LoginPage() {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-field"
+                  className="input-field-glass"
                   required
                 />
               </div>
               
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2">
                   Password
                 </label>
                 <input
@@ -68,13 +79,13 @@ export default function LoginPage() {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field"
+                  className="input-field-glass"
                   required
                 />
               </div>
               
               <div className="flex items-center justify-between">
-                <Link href="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
+                <Link href="/forgot-password" className="text-sm text-primary-400 hover:text-primary-300 transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -88,9 +99,9 @@ export default function LoginPage() {
               </button>
             </form>
             
-            <p className="mt-6 text-center text-gray-600">
+            <p className="mt-6 text-center text-neutral-400">
               Don't have an account?{' '}
-              <Link href="/signup" className="text-primary-600 hover:text-primary-700 font-semibold">
+              <Link href="/signup" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
                 Sign up
               </Link>
             </p>

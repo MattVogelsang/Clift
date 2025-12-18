@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
-import { Navbar } from '@/components/Navbar'
+import { Navbar } from '@/components/layout/Navbar'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -33,16 +33,24 @@ export default function ForgotPasswordPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-16">
-          <div className="max-w-md w-full card text-center">
-            <div className="text-green-500 text-6xl mb-4">✓</div>
-            <h1 className="text-3xl font-bold mb-4">Check Your Email</h1>
-            <p className="text-gray-600 mb-6">
-              We've sent you a password reset link. Please check your email and follow the instructions.
-            </p>
-            <Link href="/login" className="btn-primary inline-block">
-              Back to Login
-            </Link>
+        <div className="min-h-screen bg-background-dark flex items-center justify-center px-4 pt-20 pb-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-950/30 via-purple-950/20 to-background-dark pointer-events-none" />
+          <div className="relative max-w-md w-full">
+            <div className="card-glass text-center animate-scale-in">
+              <div className="text-6xl mb-6">
+                <span className="text-accent-emerald">✓</span>
+              </div>
+              <h1 className="text-4xl font-bold mb-4">
+                <span className="text-white">Check Your</span>{' '}
+                <span className="text-gradient">Email</span>
+              </h1>
+              <p className="text-neutral-400 mb-8 leading-relaxed">
+                We've sent you a password reset link. Please check your email and follow the instructions.
+              </p>
+              <Link href="/login" className="btn-primary inline-block">
+                Back to Login
+              </Link>
+            </div>
           </div>
         </div>
       </>
@@ -52,23 +60,30 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-16">
-        <div className="max-w-md w-full">
-          <div className="card">
-            <h1 className="text-3xl font-bold text-center mb-2">Reset Password</h1>
-            <p className="text-center text-gray-600 mb-8">
-              Enter your email and we'll send you a reset link
-            </p>
+      <div className="min-h-screen bg-background-dark flex items-center justify-center px-4 pt-20 pb-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-950/30 via-purple-950/20 to-background-dark pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
+        <div className="relative max-w-md w-full">
+          <div className="card-glass animate-scale-in">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold mb-2">
+                <span className="text-white">Reset</span>{' '}
+                <span className="text-gradient">Password</span>
+              </h1>
+              <p className="text-neutral-400">
+                Enter your email and we'll send you a reset link
+              </p>
+            </div>
             
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm">
                 {error}
               </div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
                   Email
                 </label>
                 <input
@@ -76,7 +91,7 @@ export default function ForgotPasswordPage() {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-field"
+                  className="input-field-glass"
                   required
                 />
               </div>
@@ -90,8 +105,8 @@ export default function ForgotPasswordPage() {
               </button>
             </form>
             
-            <p className="mt-6 text-center text-gray-600">
-              <Link href="/login" className="text-primary-600 hover:text-primary-700 font-semibold">
+            <p className="mt-6 text-center text-neutral-400">
+              <Link href="/login" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
                 Back to Login
               </Link>
             </p>
